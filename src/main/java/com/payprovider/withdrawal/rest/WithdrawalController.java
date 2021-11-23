@@ -1,5 +1,6 @@
 package com.payprovider.withdrawal.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payprovider.withdrawal.dto.WithdrawalDto;
 import com.payprovider.withdrawal.exception.TransactionException;
 import com.payprovider.withdrawal.model.PaymentMethod;
@@ -33,10 +34,7 @@ import java.util.List;
 public class WithdrawalController {
 
     @Autowired
-    private ApplicationContext context;
-
-    @Autowired
-    private UserController userController;
+    private ObjectMapper objectMapper;
 
     @Autowired
     private final WithdrawalService withdrawalService;
@@ -46,6 +44,8 @@ public class WithdrawalController {
 
     @Autowired
     private final PaymentMethodService paymentMethodService;
+
+    private static final String ASAP_WITHDRAWAL_VALUE = "ASAP";
 
     @PostMapping("/create-withdrawals")
     public ResponseEntity<String> create(HttpServletRequest request) {
@@ -63,20 +63,16 @@ public class WithdrawalController {
         try {
             user = userService.findById(Long.parseLong(userId));
             paymentMethod = paymentMethodService.findById(Long.parseLong(paymentMethodId));
-
         } catch (Exception e) {
-            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-        }
-
-        if (!context.getBean(PaymentMethodRepository.class).findById(Long.parseLong(paymentMethodId)).isPresent()) {
-            return new ResponseEntity<>("Payment method not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 
         Object body;
-        if (executeAt.equals("ASAP")) {
+//        String response;
+        if (executeAt.equalsIgnoreCase(ASAP_WITHDRAWAL_VALUE)) {
             Withdrawal withdrawal = new Withdrawal();
             withdrawal.setUserId(user.getId());
-            withdrawal.setPaymentMethodId(Long.parseLong(paymentMethodId));
+            withdrawal.setPaymentMethodId(paymentMethod.getId());
             withdrawal.setAmount(Double.parseDouble(amount));
             withdrawal.setCreatedAt(Instant.now());
             withdrawal.setStatus(WithdrawalStatus.PENDING);
@@ -85,8 +81,8 @@ public class WithdrawalController {
             body = withdrawal;
         } else {
             WithdrawalScheduled withdrawalScheduled = new WithdrawalScheduled();
-            withdrawalScheduled.setUserId(Long.parseLong(userId));
-            withdrawalScheduled.setPaymentMethodId(Long.parseLong(paymentMethodId));
+            withdrawalScheduled.setUserId(user.getId());
+            withdrawalScheduled.setPaymentMethodId(paymentMethod.getId());
             withdrawalScheduled.setAmount(Double.parseDouble(amount));
             withdrawalScheduled.setCreatedAt(Instant.now());
             withdrawalScheduled.setExecuteAt(Instant.parse(executeAt));
@@ -95,7 +91,6 @@ public class WithdrawalController {
             withdrawalService.schedule(withdrawalScheduled);
             body = withdrawalScheduled;
         }
-
         return new ResponseEntity(body, HttpStatus.CREATED);
     }
 

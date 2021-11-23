@@ -47,8 +47,8 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         executorService.submit(() -> {
             Optional<Withdrawal> savedWithdrawalOptional = withdrawalRepository.findById(pendingWithdrawal.getId());
 
-            PaymentMethod paymentMethod;
-            paymentMethod = savedWithdrawalOptional.map(value -> paymentMethodRepository.findById(value.getPaymentMethodId()).orElse(null)).orElse(null);
+            PaymentMethod paymentMethod = savedWithdrawalOptional.map(value ->
+                    paymentMethodRepository.findById(value.getPaymentMethodId()).orElse(null)).orElse(null);
 
             if (savedWithdrawalOptional.isPresent() && paymentMethod != null) {
                 Withdrawal savedWithdrawal = savedWithdrawalOptional.get();
@@ -81,8 +81,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     @Override
     @Scheduled(fixedDelay = 5000)
     public void run() {
-        withdrawalScheduledRepository.findAllByExecuteAtBefore(Instant.now())
-                .forEach(this::processScheduled);
+        withdrawalScheduledRepository.findAllByExecuteAtBefore(Instant.now()).forEach(this::processScheduled);
     }
 
     @Override
