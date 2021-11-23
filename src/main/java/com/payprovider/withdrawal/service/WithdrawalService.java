@@ -22,12 +22,16 @@ public class WithdrawalService {
 
     @Autowired
     private WithdrawalRepository withdrawalRepository;
+
     @Autowired
     private WithdrawalScheduledRepository withdrawalScheduledRepository;
+
     @Autowired
     private WithdrawalProcessingService withdrawalProcessingService;
+
     @Autowired
     private PaymentMethodRepository paymentMethodRepository;
+
     @Autowired
     private EventsService eventsService;
 

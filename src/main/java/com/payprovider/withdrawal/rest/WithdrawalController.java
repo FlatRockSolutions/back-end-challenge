@@ -4,10 +4,13 @@ import com.payprovider.withdrawal.model.WithdrawalStatus;
 import com.payprovider.withdrawal.repository.PaymentMethodRepository;
 import com.payprovider.withdrawal.repository.WithdrawalRepository;
 import com.payprovider.withdrawal.repository.WithdrawalScheduledRepository;
+import com.payprovider.withdrawal.service.UserService;
 import com.payprovider.withdrawal.service.WithdrawalService;
 import com.payprovider.withdrawal.model.Withdrawal;
 import com.payprovider.withdrawal.model.WithdrawalScheduled;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -21,17 +24,24 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Api
 @RestController
+@RequiredArgsConstructor
 public class WithdrawalController {
 
     @Autowired
     private ApplicationContext context;
+
     @Autowired
     private UserController userController;
 
+    private final WithdrawalService withdrawalService;
+
+    private final UserService userService;
+
     @PostMapping("/create-withdrawals")
-    public ResponseEntity create(HttpServletRequest request) {
+    public ResponseEntity<String> create(HttpServletRequest request) {
         String userId = request.getParameter("userId");
         String paymentMethodId = request.getParameter("paymentMethodId");
         String amount = request.getParameter("amount");
