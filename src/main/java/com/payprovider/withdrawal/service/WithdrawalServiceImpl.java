@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -82,6 +83,16 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     public void run() {
         withdrawalScheduledRepository.findAllByExecuteAtBefore(Instant.now())
                 .forEach(this::processScheduled);
+    }
+
+    @Override
+    public List<Withdrawal> findAllWithdrawals() {
+        return withdrawalRepository.findAll();
+    }
+
+    @Override
+    public List<WithdrawalScheduled> findAllScheduledWithdrawals() {
+        return withdrawalScheduledRepository.findAll();
     }
 
     private void processScheduled(WithdrawalScheduled withdrawal) {
