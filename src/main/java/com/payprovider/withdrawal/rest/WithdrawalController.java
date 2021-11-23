@@ -67,6 +67,7 @@ public class WithdrawalController {
             withdrawal.setAmount(Double.parseDouble(amount));
             withdrawal.setCreatedAt(Instant.now());
             withdrawal.setStatus(WithdrawalStatus.PENDING);
+
             withdrawalService.create(withdrawal);
             body = withdrawal;
         } else {
