@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,7 +23,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto findById(Long id) throws UserNotFoundException {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("No user found", id));
-        return UserDto.builder().id(user.getId())
+        return UserDto
+                .builder()
+                .id(user.getId())
                 .firstName(user.getFirstName())
                 .paymentMethods(user.getPaymentMethods())
                 .maxWithdrawalAmount(user.getMaxWithdrawalAmount()).build();
@@ -30,13 +33,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> findAll() {
-        List<User> users = userRepository.findAll();
-        List<UserDto> userDtos = new ArrayList<>();
-        for (User user : users) {
-            UserDto userDto = toUserDto(user);
-            userDtos.add(userDto);
-        }
-        return userDtos;
+        return userRepository.findAll().stream().map(this::toUserDto).collect(Collectors.toList());
     }
 
     private UserDto toUserDto(User user) {

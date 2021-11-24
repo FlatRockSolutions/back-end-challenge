@@ -30,7 +30,7 @@ public class User {
 
     private String firstName;
 
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy = "user")
     private List<PaymentMethod> paymentMethods;
 
     private Double maxWithdrawalAmount;

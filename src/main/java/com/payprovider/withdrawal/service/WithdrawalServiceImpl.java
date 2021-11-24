@@ -47,8 +47,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         executorService.submit(() -> {
             Optional<Withdrawal> savedWithdrawalOptional = withdrawalRepository.findById(pendingWithdrawal.getId());
 
-            PaymentMethod paymentMethod = savedWithdrawalOptional.map(value ->
-                    paymentMethodRepository.findById(value.getPaymentMethodId()).orElse(null)).orElse(null);
+            PaymentMethod paymentMethod = savedWithdrawalOptional.flatMap(value -> paymentMethodRepository.findById(value.getPaymentMethodId())).orElse(null);
 
             if (savedWithdrawalOptional.isPresent() && paymentMethod != null) {
                 Withdrawal savedWithdrawal = savedWithdrawalOptional.get();
@@ -61,13 +60,11 @@ public class WithdrawalServiceImpl implements WithdrawalService {
                 } catch (Exception e) {
                     if (e instanceof TransactionException) {
                         savedWithdrawal.setStatus(WithdrawalStatus.FAILED);
-                        withdrawalRepository.save(savedWithdrawal);
-                        eventsService.send(savedWithdrawal);
                     } else {
                         savedWithdrawal.setStatus(WithdrawalStatus.INTERNAL_ERROR);
-                        withdrawalRepository.save(savedWithdrawal);
-                        eventsService.send(savedWithdrawal);
                     }
+                    withdrawalRepository.save(savedWithdrawal);
+                    eventsService.send(savedWithdrawal);
                 }
             }
         });
@@ -106,13 +103,11 @@ public class WithdrawalServiceImpl implements WithdrawalService {
             } catch (Exception e) {
                 if (e instanceof TransactionException) {
                     withdrawal.setStatus(WithdrawalStatus.FAILED);
-                    withdrawalScheduledRepository.save(withdrawal);
-                    eventsService.send(withdrawal);
                 } else {
                     withdrawal.setStatus(WithdrawalStatus.INTERNAL_ERROR);
-                    withdrawalScheduledRepository.save(withdrawal);
-                    eventsService.send(withdrawal);
                 }
+                withdrawalScheduledRepository.save(withdrawal);
+                eventsService.send(withdrawal);
             }
         }
     }
