@@ -30,7 +30,7 @@ public class WithdrawalProcessingService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public Long sendToProcessing(Double amount, PaymentMethod paymentMethod) throws TransactionException {
+    Long sendToProcessing(Double amount, PaymentMethod paymentMethod) throws TransactionException {
         PaymentProcessingRequest paymentProcessingRequest = PaymentProcessingRequest.builder()
                 .amount(amount)
                 .paymentMethod(paymentMethod).build();
