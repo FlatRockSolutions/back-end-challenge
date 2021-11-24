@@ -3,7 +3,6 @@ package com.payprovider.withdrawal.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payprovider.withdrawal.dto.UserDto;
-import com.payprovider.withdrawal.dto.WithdrawalDto;
 import com.payprovider.withdrawal.model.PaymentMethod;
 import com.payprovider.withdrawal.model.WithdrawalStatus;
 import com.payprovider.withdrawal.service.PaymentMethodService;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -55,6 +55,8 @@ public class WithdrawalController {
         if (userId == null || paymentMethodId == null || amount == null || executeAt == null) {
             return new ResponseEntity<>("Required params are missing", HttpStatus.BAD_REQUEST);
         }
+
+        log.info("Execute at " + executeAt);
 
         UserDto userDto;
         PaymentMethod paymentMethod;
@@ -104,14 +106,13 @@ public class WithdrawalController {
     }
 
     @GetMapping("/find-all-withdrawals")
-    public ResponseEntity<WithdrawalDto> findAll() {
+    public ResponseEntity<Object> findAll() {
         List<Withdrawal> withdrawals = withdrawalService.findAllWithdrawals();
         List<WithdrawalScheduled> withdrawalsScheduled = withdrawalService.findAllScheduledWithdrawals();
+        List<Object> result = new ArrayList<>();
+        result.addAll(withdrawals);
+        result.addAll(withdrawalsScheduled);
 
-        WithdrawalDto withdrawalDto = WithdrawalDto.builder()
-                .withdrawals(withdrawals)
-                .withdrawalScheduled(withdrawalsScheduled)
-                .build();
-        return new ResponseEntity<>(withdrawalDto, HttpStatus.OK);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

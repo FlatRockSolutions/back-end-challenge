@@ -3,29 +3,20 @@ package com.payprovider.withdrawal.controller;
 import com.payprovider.withdrawal.Application;
 import com.payprovider.withdrawal.dto.UserDto;
 import com.payprovider.withdrawal.repository.UserRepository;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//@ExtendWith(SpringExtension.class)
-//@SpringBootTest
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -34,30 +25,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration
 public class UserControllerTest {
 
-    private static HttpHeaders headers;
-
     @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
-    private TestRestTemplate testRestTemplate = new TestRestTemplate();
+    private TestRestTemplate testRestTemplate;
 
     @Autowired
     private UserRepository userRepository;
-
-    private MockMvc restMockMvc;
-
-    @BeforeClass
-    public static void setupBeforeClass() {
-        headers = new HttpHeaders();
-        headers.add("Content-type", "application/json");
-    }
 
     @BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);
         userRepository.deleteAll();
-        this.restMockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+        testRestTemplate = new TestRestTemplate();
     }
 
     @Test
@@ -74,4 +52,8 @@ public class UserControllerTest {
         assertThat(response.getBody()).isNotNull();
     }
 
+    @Test
+    public void testUserNotFound() {
+        testRestTemplate.getForEntity("/find-user-by-id/5", UserDto.class);
+    }
 }
