@@ -1,5 +1,6 @@
 package com.payprovider.withdrawal.rest;
 
+import com.payprovider.withdrawal.dto.UserDto;
 import com.payprovider.withdrawal.exception.TransactionException;
 import com.payprovider.withdrawal.model.User;
 import com.payprovider.withdrawal.repository.UserRepository;
@@ -22,12 +23,12 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/find-all-users")
-    public List<User> findAll() {
+    public List<UserDto> findAll() {
         return userService.findAll();
     }
 
     @GetMapping("/find-user-by-id/{id}")
-    public User findById(@PathVariable Long id) throws TransactionException {
+    public UserDto findById(@PathVariable Long id) throws TransactionException {
         return userService.findById(id);
     }
 }

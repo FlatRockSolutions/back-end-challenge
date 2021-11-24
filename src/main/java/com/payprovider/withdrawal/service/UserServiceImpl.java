@@ -1,5 +1,6 @@
 package com.payprovider.withdrawal.service;
 
+import com.payprovider.withdrawal.dto.UserDto;
 import com.payprovider.withdrawal.exception.TransactionException;
 import com.payprovider.withdrawal.exception.UserNotFoundException;
 import com.payprovider.withdrawal.model.User;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -18,12 +20,31 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Override
-    public User findById(Long id) throws UserNotFoundException {
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("No user found", id));
+    public UserDto findById(Long id) throws UserNotFoundException {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("No user found", id));
+        return UserDto.builder().id(user.getId())
+                .firstName(user.getFirstName())
+                .paymentMethods(user.getPaymentMethods())
+                .maxWithdrawalAmount(user.getMaxWithdrawalAmount()).build();
     }
 
     @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserDto> findAll() {
+        List<User> users = userRepository.findAll();
+        List<UserDto> userDtos = new ArrayList<>();
+        for (User user : users) {
+            UserDto userDto = toUserDto(user);
+            userDtos.add(userDto);
+        }
+        return userDtos;
+    }
+
+    private UserDto toUserDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setFirstName(user.getFirstName());
+        userDto.setPaymentMethods(user.getPaymentMethods());
+        userDto.setMaxWithdrawalAmount(user.getMaxWithdrawalAmount());
+        return userDto;
     }
 }

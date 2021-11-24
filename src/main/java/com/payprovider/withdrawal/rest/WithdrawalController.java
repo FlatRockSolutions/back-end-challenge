@@ -1,6 +1,7 @@
 package com.payprovider.withdrawal.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.payprovider.withdrawal.dto.UserDto;
 import com.payprovider.withdrawal.dto.WithdrawalDto;
 import com.payprovider.withdrawal.exception.TransactionException;
 import com.payprovider.withdrawal.model.PaymentMethod;
@@ -59,9 +60,10 @@ public class WithdrawalController {
         }
 
         User user;
+        UserDto userDto;
         PaymentMethod paymentMethod;
         try {
-            user = userService.findById(Long.parseLong(userId));
+            userDto = userService.findById(Long.parseLong(userId));
             paymentMethod = paymentMethodService.findById(Long.parseLong(paymentMethodId));
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -71,7 +73,7 @@ public class WithdrawalController {
 //        String response;
         if (executeAt.equalsIgnoreCase(ASAP_WITHDRAWAL_VALUE)) {
             Withdrawal withdrawal = new Withdrawal();
-            withdrawal.setUserId(user.getId());
+            withdrawal.setUserId(userDto.getId());
             withdrawal.setPaymentMethodId(paymentMethod.getId());
             withdrawal.setAmount(Double.parseDouble(amount));
             withdrawal.setCreatedAt(Instant.now());
@@ -81,7 +83,7 @@ public class WithdrawalController {
             body = withdrawal;
         } else {
             WithdrawalScheduled withdrawalScheduled = new WithdrawalScheduled();
-            withdrawalScheduled.setUserId(user.getId());
+            withdrawalScheduled.setUserId(userDto.getId());
             withdrawalScheduled.setPaymentMethodId(paymentMethod.getId());
             withdrawalScheduled.setAmount(Double.parseDouble(amount));
             withdrawalScheduled.setCreatedAt(Instant.now());
