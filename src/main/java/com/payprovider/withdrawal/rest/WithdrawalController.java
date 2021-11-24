@@ -1,13 +1,11 @@
 package com.payprovider.withdrawal.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payprovider.withdrawal.dto.UserDto;
 import com.payprovider.withdrawal.dto.WithdrawalDto;
-import com.payprovider.withdrawal.exception.TransactionException;
 import com.payprovider.withdrawal.model.PaymentMethod;
-import com.payprovider.withdrawal.model.User;
 import com.payprovider.withdrawal.model.WithdrawalStatus;
-import com.payprovider.withdrawal.repository.PaymentMethodRepository;
 import com.payprovider.withdrawal.service.PaymentMethodService;
 import com.payprovider.withdrawal.service.UserService;
 import com.payprovider.withdrawal.service.WithdrawalService;
@@ -17,7 +15,6 @@ import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,7 +56,6 @@ public class WithdrawalController {
             return new ResponseEntity<>("Required params are missing", HttpStatus.BAD_REQUEST);
         }
 
-        User user;
         UserDto userDto;
         PaymentMethod paymentMethod;
         try {
@@ -69,9 +65,9 @@ public class WithdrawalController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 
-        Object body;
-//        String response;
+        String response;
         if (executeAt.equalsIgnoreCase(ASAP_WITHDRAWAL_VALUE)) {
+            // TODO: might create a request DTO here and put creation logic to a service
             Withdrawal withdrawal = new Withdrawal();
             withdrawal.setUserId(userDto.getId());
             withdrawal.setPaymentMethodId(paymentMethod.getId());
@@ -80,8 +76,14 @@ public class WithdrawalController {
             withdrawal.setStatus(WithdrawalStatus.PENDING);
 
             withdrawalService.create(withdrawal);
-            body = withdrawal;
+            try {
+                response = objectMapper.writeValueAsString(withdrawal);
+            } catch (JsonProcessingException e) {
+                log.error("Error processing withdrawal response {}", e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         } else {
+            // TODO: might create a request DTO here and put creation logic to a service
             WithdrawalScheduled withdrawalScheduled = new WithdrawalScheduled();
             withdrawalScheduled.setUserId(userDto.getId());
             withdrawalScheduled.setPaymentMethodId(paymentMethod.getId());
@@ -91,9 +93,14 @@ public class WithdrawalController {
             withdrawalScheduled.setStatus(WithdrawalStatus.PENDING);
 
             withdrawalService.schedule(withdrawalScheduled);
-            body = withdrawalScheduled;
+            try {
+                response = objectMapper.writeValueAsString(withdrawalScheduled);
+            } catch (JsonProcessingException e) {
+                log.error("Error processing withdrawal scheduled response {}", e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-        return new ResponseEntity(body, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/find-all-withdrawals")
