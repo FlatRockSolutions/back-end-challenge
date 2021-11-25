@@ -1,4 +1,4 @@
-FROM openjdk:jdk-12.0.2_10-alpine
+FROM openjdk:12-jdk-alpine
 MAINTAINER andrewkulminsky
-COPY target/payprovider-challenge-be-1.0.jar executable.jar
+COPY target/*.jar app.jar
 ENTRYPOINT ["java","-jar","/executable.jar"]
