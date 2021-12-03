@@ -1,81 +1,62 @@
 package com.payprovider.withdrawal.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import java.math.BigDecimal;
 import java.time.Instant;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 @Entity(name = "withdrawals")
 public class Withdrawal {
+
+    public Withdrawal(Long id) {
+        this.id = id;
+    }
 
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
+
+    @Column(name = "transaction_id")
     private Long transactionId;
-    private Double amount;
+
+    private BigDecimal amount;
+
     private Instant createdAt;
-    private Long userId;
-    private Long paymentMethodId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @ToString.Exclude
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id", insertable = false, updatable = false)
+    @ToString.Exclude
+    private PaymentMethod paymentMethod;
+
     @Enumerated(EnumType.STRING)
     private WithdrawalStatus status;
 
-    public Long getId() {
-        return id;
-    }
+    private Instant executeAt;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Double amount) {
-        this.amount = amount;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Long getPaymentMethodId() {
-        return paymentMethodId;
-    }
-
-    public void setPaymentMethodId(Long paymentMethodId) {
-        this.paymentMethodId = paymentMethodId;
-    }
-
-    public WithdrawalStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(WithdrawalStatus status) {
-        this.status = status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setTransactionId(Long transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public Long getTransactionId() {
-        return transactionId;
-    }
+    @Column(name = "withdrawal_type")
+    @Enumerated(EnumType.STRING)
+    private WithdrawalType withdrawalType;
 }

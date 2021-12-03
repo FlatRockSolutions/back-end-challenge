@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  payprovider-challenge-be:
+    container_name: payprovider-challenge-be
+    build: .
+    image: payprovider-challenge-be
+    environment:
+      - "JAVA_OPTS=-agentlib:jdwp=server=y,transport=dt_socket,address=7071,suspend=n
+        -Xms512m
+        -Xmx1024m"
+    ports:
+      - 7070:7070
+      - 7071:7071

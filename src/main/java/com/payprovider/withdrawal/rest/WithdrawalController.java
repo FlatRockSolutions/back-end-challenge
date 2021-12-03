@@ -1,87 +1,55 @@
 package com.payprovider.withdrawal.rest;
 
-import com.payprovider.withdrawal.model.WithdrawalStatus;
-import com.payprovider.withdrawal.repository.PaymentMethodRepository;
-import com.payprovider.withdrawal.repository.WithdrawalRepository;
-import com.payprovider.withdrawal.repository.WithdrawalScheduledRepository;
+import com.payprovider.withdrawal.dto.RequestWithdrawalDto;
+import com.payprovider.withdrawal.dto.WithdrawalDto;
+
 import com.payprovider.withdrawal.service.WithdrawalService;
-import com.payprovider.withdrawal.model.Withdrawal;
-import com.payprovider.withdrawal.model.WithdrawalScheduled;
-import io.swagger.annotations.Api;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import com.payprovider.withdrawal.validator.WithdrawalValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import java.time.Instant;
-import java.util.ArrayList;
+import javax.validation.Valid;
 import java.util.List;
 
-@Api
+
 @RestController
+@AllArgsConstructor
+@Tag(name = "Withdrawal", description = "The withdrawal API")
 public class WithdrawalController {
 
-    @Autowired
-    private ApplicationContext context;
-    @Autowired
-    private UserController userController;
+    public static final String CREATE_WITHDRAWALS = "/create-withdrawals";
+    public static final String FIND_ALL_WITHDRAWALS = "/find-all-withdrawals";
+    private final WithdrawalService withdrawalService;
+    private final WithdrawalValidator withdrawalValidator;
 
-    @PostMapping("/create-withdrawals")
-    public ResponseEntity create(HttpServletRequest request) {
-        String userId = request.getParameter("userId");
-        String paymentMethodId = request.getParameter("paymentMethodId");
-        String amount = request.getParameter("amount");
-        String executeAt = request.getParameter("executeAt");
-        if (userId == null || paymentMethodId == null || amount == null || executeAt == null) {
-            return new ResponseEntity("Required params are missing", HttpStatus.BAD_REQUEST);
-        }
-        try {
-            userController.findById(Long.parseLong(userId));
-        } catch (Exception e) {
-            return new ResponseEntity("User not found", HttpStatus.NOT_FOUND);
-        }
-        if (!context.getBean(PaymentMethodRepository.class).findById(Long.parseLong(paymentMethodId)).isPresent()) {
-            return new ResponseEntity("Payment method not found", HttpStatus.NOT_FOUND);
-        }
-
-        WithdrawalService withdrawalService = context.getBean(WithdrawalService.class);
-        Object body;
-        if (executeAt.equals("ASAP")) {
-            Withdrawal withdrawal = new Withdrawal();
-            withdrawal.setUserId(Long.parseLong(userId));
-            withdrawal.setPaymentMethodId(Long.parseLong(paymentMethodId));
-            withdrawal.setAmount(Double.parseDouble(amount));
-            withdrawal.setCreatedAt(Instant.now());
-            withdrawal.setStatus(WithdrawalStatus.PENDING);
-            withdrawalService.create(withdrawal);
-            body = withdrawal;
-        } else {
-            WithdrawalScheduled withdrawalScheduled = new WithdrawalScheduled();
-            withdrawalScheduled.setUserId(Long.parseLong(userId));
-            withdrawalScheduled.setPaymentMethodId(Long.parseLong(paymentMethodId));
-            withdrawalScheduled.setAmount(Double.parseDouble(amount));
-            withdrawalScheduled.setCreatedAt(Instant.now());
-            withdrawalScheduled.setExecuteAt(Instant.parse(executeAt));
-            withdrawalScheduled.setStatus(WithdrawalStatus.PENDING);
-            withdrawalService.schedule(withdrawalScheduled);
-            body = withdrawalScheduled;
-        }
-
-        return new ResponseEntity(body, HttpStatus.OK);
+    @Operation(summary = "Creating withdrawal.", tags = {"withdrawal"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Accepting withdrawal creating operation."),
+        @ApiResponse(responseCode = "400", description = "Lack/incorrect of amount, userId, paymentMethodId or withdrawalType."),
+        @ApiResponse(responseCode = "404", description = "User or payment method not found."),
+        @ApiResponse(responseCode = "422", description = "Validation exception")})
+    @PostMapping(CREATE_WITHDRAWALS)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public WithdrawalDto create(@Valid @RequestBody RequestWithdrawalDto withdrawalDto) {
+        withdrawalValidator.validate(withdrawalDto);
+        return withdrawalService.create(withdrawalDto);
     }
 
-    @GetMapping("/find-all-withdrawals")
-    public ResponseEntity findAll() {
-        List<Withdrawal> withdrawals = context.getBean(WithdrawalRepository.class).findAll();
-        List<WithdrawalScheduled> withdrawalsScheduled = context.getBean(WithdrawalScheduledRepository.class).findAll();
-        List<Object> result = new ArrayList<>();
-        result.addAll(withdrawals);
-        result.addAll(withdrawalsScheduled);
-
-        return new ResponseEntity(result, HttpStatus.OK);
+    @Operation(summary = "Find all withdrawals.", tags = {"withdrawal"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successful operation.")})
+    @GetMapping(FIND_ALL_WITHDRAWALS)
+    public List<WithdrawalDto> findAll() {
+        return withdrawalService.findAll();
     }
 }
